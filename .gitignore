@@ -27,3 +27,10 @@
 *.exe
 *.out
 *.app
+/GTAGS
+/GRTAGS
+/GPATH
+/.dir-locals.el
+/origin/
+/build/CMakeCache.txt
+/build
