@@ -16,9 +16,11 @@ public:
     //! Move-Constructor (default)
     Atom( Atom && ) = default;
 	
-    virtual std::string str() override;
+    virtual std::string str( int indentation = 0 ) override;
 
     static std::unique_ptr<Token> create( std::string content );
+
+    virtual bool isAtom() const override;
 private:
     //! Copy-Constructor (delete)
     Atom( const Atom & ) = delete;

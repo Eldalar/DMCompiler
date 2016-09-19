@@ -35,7 +35,7 @@ public:
     //! Move-Constructor (default)
     Token( Token && ) = default;
 
-    virtual std::string str();
+    virtual std::string str( int indentation = 0 );
 
     static std::unique_ptr<Token> create( Type type,
 					  std::vector<Content> content = {} );
@@ -44,6 +44,8 @@ public:
 
     Type getType();
     std::unique_ptr<Token>& getContent( uint32_t index );
+
+    virtual bool isAtom() const;
 private:
     //! Copy-Constructor (delete)
     Token( const Token & ) = delete;

@@ -56,16 +56,43 @@ std::string Token::ToString( Type type ) {
     return "Unknown";
 }
 
-#include <iostream>
-std::string Token::str() {
+bool Token::isAtom() const {
+    return false;
+}
+
+void indent( std::stringstream& ss, int indentation ) {
+    for( int i = 0;
+	 i < indentation;
+	 ++i) {
+	ss << "  ";
+    }
+}
+
+std::string Token::str( int indentation ) {
+    int next_indentation = indentation + 1;
+    if( indentation < 0 ) {
+	next_indentation = indentation;
+    }
     std::stringstream ss;
-    ss << "{ Type: " << ToString( mType ) << " ";
-    ss << " Content: ";
+    indent(ss, indentation);
+    ss << "{" << std::endl;
+    indent(ss, next_indentation);
+    ss << "Type: " << ToString( mType ) << std::endl;;
+    indent(ss, next_indentation);
+    ss << "Content: ";
+    bool isAtom = !(mContent.size() > 1 ||
+		    (mContent.size() > 0 && !mContent[0]->isAtom() ));
+    if( !isAtom ) {
+	ss  << std::endl;
+    }
     for( std::unique_ptr<Token>& content : mContent ) {
-	ss << content->str();
-	ss << " ";
-	}
-    ss << "}";
+	ss << content->str( next_indentation );
+    }
+    if( isAtom ) {
+	ss << std::endl;
+    }
+    indent(ss, indentation);
+    ss << "}" << std::endl;
     return ss.str();
 }
 
