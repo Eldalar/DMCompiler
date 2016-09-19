@@ -22,14 +22,15 @@ public:
 
     void run();
 private:
-    bool readFile( std::string file );
+    bool readFile( std::string file,
+		   std::string directory);
     //! Copy-Constructor (delete)
     FileReader( const FileReader & ) = delete;
     //! Asignment-Operator (delete)
     FileReader &operator=( const FileReader & ) = delete;
 
     std::map<std::string, TokenPtr> mFileTokens;
-    std::vector<std::string> mFileNames;
+    std::vector<std::pair<std::string,std::string>> mFileNames;
     std::string mFolder;
 };
 

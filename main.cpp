@@ -1,6 +1,6 @@
 #include "file_reader.h"
 
 int main() {
-    FileReader fileReader( "../origin/", "goonstation.dme" );
+    FileReader fileReader( "..\\origin\\", "goonstation.dme" );
     fileReader.run();
 }

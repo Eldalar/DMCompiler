@@ -159,8 +159,9 @@ bool TokenStream::isIdentifier() {
 
 TokenPtr TokenStream::identifier() {
     std::string value;
-    while( isIdentifier() ||
-	   isNumber() ) {
+    while( !mInputStream.eof() &&
+	   (isIdentifier() ||
+	    isNumber() )) {
 	value += mInputStream.next();
     }
     if( value.size() == 0 ) {
