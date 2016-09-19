@@ -18,6 +18,7 @@ public:
 	
     virtual std::string str( int indentation = 0 ) override;
 
+    static std::unique_ptr<Token> create( char content );
     static std::unique_ptr<Token> create( std::string content );
 
     virtual bool isAtom() const override;
