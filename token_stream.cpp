@@ -75,7 +75,8 @@ TokenPtr TokenStream::comment() {
 }
 
 bool TokenStream::isNewLine() {
-    return mInputStream.peek() == '\r';
+    return !mInputStream.eof() &&
+	    mInputStream.peek() == '\r';
 }
 
 void TokenStream::newLine() {
