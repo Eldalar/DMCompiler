@@ -149,6 +149,11 @@ TokenPtr TokenStream::expression() {
 	    expressionParts.emplace_back( comment() );
 	} else if( isMultiLineComment() ) {
 	    expressionParts.emplace_back( multilineComment() );
+	} else if( mInputStream.peek(0) == '\\' &&
+		   mInputStream.peek(1) == '\r' ) {
+	    // Simple removing escaped newlines
+	    mInputStream.next();
+	    newLine();
 	} else if( isNewLine() ) {
 	    while( isNewLine() ) {
 		// Skip empty lines
