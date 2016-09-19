@@ -41,6 +41,14 @@ private:
     bool isOperator();
     //! Parses an Operator
     TokenPtr Operator();
+    //! Determines if the next token is a Closing Special Operator
+    bool isClosingSpecialOperator();
+    //! Determines if the next token is an Opening Special Operator
+    bool isOpeningSpecialOperator();
+    //! Determines if the next token is a Special Operator
+    bool isSpecialOperator();
+    //! Parses a Special Operator
+    TokenPtr specialOperator();
     //! Determines if the next token is Whitespace
     bool isWhitespace( uint32_t offset = 0 );
     //! Determines the length of the following Whitespace token
