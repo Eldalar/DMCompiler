@@ -20,6 +20,7 @@ public:
 	Expression,
 	Atom,
 	Operator,
+	SpecialOperator,
 	String,
 	File,
 	Number

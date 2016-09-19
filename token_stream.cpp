@@ -98,15 +98,15 @@ TokenPtr TokenStream::expression() {
     std::vector<TokenPtr> expressionParts;
     while( !mInputStream.eof() &&
 	   !isComment() &&
-	   mInputStream.peek() != ')' ) {
+	   !isClosingSpecialOperator() ) {
 	if( isQuickExpressionStart() ) {
 	    quickExpressionStart();
 	} else if( isIdentifier() ) {
 	    expressionParts.emplace_back( identifier() );
-	} else if( mInputStream.peek() == '(' ) {
-	    mInputStream.next();
+	} else if( isSpecialOperator() ) {
+	    expressionParts.emplace_back( specialOperator() );
 	    expressionParts.emplace_back( expression() );
-	    mInputStream.next();
+	    expressionParts.emplace_back( specialOperator() );
 	} else if( mInputStream.peek() == ',' ) {
 	    mInputStream.next();
 	} else if( isOperator() ) {
@@ -168,6 +168,29 @@ TokenPtr TokenStream::identifier() {
 	throwError( "Unable to read the identifier" );
     }
     return Token::create( Token::Identifier, Atom::create(value) );
+}
+
+bool TokenStream::isClosingSpecialOperator() {
+    char c = mInputStream.peek();
+    return  c == ')' ||
+	    c == ']';
+}
+
+bool TokenStream::isOpeningSpecialOperator() {
+    char c = mInputStream.peek();
+    return  c == '(' ||
+	    c == '[';
+}
+
+bool TokenStream::isSpecialOperator() {
+    return  isClosingSpecialOperator() ||
+	    isOpeningSpecialOperator();
+    
+}
+
+TokenPtr TokenStream::specialOperator() {
+    return Token::create( Token::SpecialOperator,
+			  Atom::create( mInputStream.next() ) );
 }
 
 bool TokenStream::isOperator() {
