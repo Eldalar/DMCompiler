@@ -83,7 +83,6 @@ bool TokenStream::isMultiLineComment() {
 }
 
 TokenPtr TokenStream::multilineComment() {
-    std::cout << "test" << std::endl;
     if( mInputStream.next() != '/' ) {
 	throwError("Kein / vorgefunden in multiline comment" );
     }
