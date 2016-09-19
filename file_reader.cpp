@@ -41,7 +41,11 @@ bool FileReader::readFile( std::string file,
 		    TokenPtr& subtoken = token->getContent(0);
 		    if( subtoken->getContent( 0 )->getContent(0)->str() == "include" ) {
 			std::string includedFile = subtoken->getContent(1)->getContent(0)->str();
-			mFileNames.push_back( std::make_pair(includedFile, newDirectory) );
+			std::string extension = includedFile.substr( includedFile.find_last_of('.') + 1 );
+			// Excluding map Files for now
+			if( extension != "dmm") {
+			    mFileNames.push_back( std::make_pair(includedFile, newDirectory) );
+			}
 		    }
 		}
 		failureLog << token->str() << std::endl;
