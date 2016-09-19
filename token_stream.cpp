@@ -20,6 +20,9 @@ TokenPtr TokenStream::next() {
 	repeat = false;
 	if( isComment() ) {
 	    return comment();
+	} else 
+	if( isMultiLineComment() ) {
+	    return multilineComment();
 	} else if( isExpression() ) {
 	    return expression();
 	} else if( isNewLine() ) {
@@ -74,6 +77,30 @@ TokenPtr TokenStream::comment() {
     return Token::create( Token::Comment, Atom::create(value) );
 }
 
+bool TokenStream::isMultiLineComment() {
+    return  mInputStream.peek(0) == '/' &&
+	    mInputStream.peek(1) == '*';
+}
+
+TokenPtr TokenStream::multilineComment() {
+    std::cout << "test" << std::endl;
+    if( mInputStream.next() != '/' ) {
+	throwError("Kein / vorgefunden in multiline comment" );
+    }
+    if( mInputStream.next() != '*' ) {
+	throwError("Kein * vorgefunden in multiline comment" );
+    }
+    std::string value = "";
+    while( !mInputStream.eof() &&
+	   (mInputStream.peek(0) != '*' ||
+	    mInputStream.peek(1) != '/') ) {
+	value += mInputStream.next();
+    }
+    mInputStream.next();
+    mInputStream.next();
+    return Token::create( Token::Comment, Atom::create(value) );
+}
+
 bool TokenStream::isNewLine() {
     return !mInputStream.eof() &&
 	    mInputStream.peek() == '\r';
@@ -121,6 +148,8 @@ TokenPtr TokenStream::expression() {
 	    expressionParts.emplace_back( number() );
 	} else if( isComment() ) {
 	    expressionParts.emplace_back( comment() );
+	} else if( isMultiLineComment() ) {
+	    expressionParts.emplace_back( multilineComment() );
 	} else if( isNewLine() ) {
 	    while( isNewLine() ) {
 		// Skip empty lines
@@ -147,7 +176,8 @@ TokenPtr TokenStream::expression() {
 
 bool TokenStream::isQuickExpressionStart() {
     return  mInputStream.peek() == '/' &&
-	    mInputStream.peek(1) != '/';
+	(mInputStream.peek(1) != '/' &&
+	 mInputStream.peek(1) != '*' ) ;
 }
 
 void TokenStream::quickExpressionStart() {
@@ -206,7 +236,7 @@ bool TokenStream::isOperator() {
     return  c == '+' ||
 	    c == '-' ||
 	    c == '*' ||
-	    (c == '/' && c2 != '/')||
+	    (c == '/' && c2 != '/' && c2 != '*')||
 	    c == '=' ||
 	    c == '|' ||
 	    c == '&' ||

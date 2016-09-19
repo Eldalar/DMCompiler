@@ -25,6 +25,10 @@ private:
     bool isComment();
     //! Parses a comment token
     TokenPtr comment();
+    //! Determines if the next token is a multiline comment
+    bool isMultiLineComment();
+    //! Parses a multiline comment token
+    TokenPtr multilineComment();
     //! Determines if the next token is a newline
     bool isNewLine();
     //! Parses a newLine
