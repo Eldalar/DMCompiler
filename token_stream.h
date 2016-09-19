@@ -67,6 +67,10 @@ private:
     bool isString();
     //! Parses the string
     TokenPtr string();
+    //! Determines if the next token is a (long) string
+    bool isLongString();
+    //! Parses the (long) string
+    TokenPtr longString();
     //! Determines if the next token is a number
     bool isNumber();
     //! Parses the number

@@ -115,6 +115,8 @@ TokenPtr TokenStream::expression() {
 	    skipWhitespace();
 	} else if( isString() ) {
 	    expressionParts.emplace_back( string() );
+	} else if( isLongString() ) {
+	    expressionParts.emplace_back( longString() );
 	} else if( isNumber() ) {
 	    expressionParts.emplace_back( number() );
 	} else if( isNewLine() ) {
@@ -204,7 +206,8 @@ bool TokenStream::isOperator() {
 	    c == '|' ||
 	    c == '&' ||
 	    c == '>' ||
-	    c == '<';
+	    c == '<' ||
+	    c == '!';
 }
 
 TokenPtr TokenStream::Operator() {
@@ -253,8 +256,34 @@ TokenPtr TokenStream::string() {
     mInputStream.next();
     std::string value;
     while( !isString() ) {
+	char c = mInputStream.peek( 0 );
+	if( c == '\\') {
+	    char c2 = mInputStream.peek( 1 );
+	    if( c2 == '"' ||
+		c2 == '\\') {
+		mInputStream.next();
+	    }
+	}
 	value += mInputStream.next();
     }
+    mInputStream.next();
+    return Token::create( Token::String, Atom::create( value ) );
+}
+
+bool TokenStream::isLongString() {
+    return  mInputStream.peek(0) == '{' &&
+	    mInputStream.peek(1) == '"';
+}
+
+TokenPtr TokenStream::longString() {
+    mInputStream.next();
+    mInputStream.next();
+    std::string value;
+    while( mInputStream.peek(0) != '"' ||
+	   mInputStream.peek(1) != '}' ) {
+	value += mInputStream.next();
+    }
+    mInputStream.next();
     mInputStream.next();
     return Token::create( Token::String, Atom::create( value ) );
 }
