@@ -98,7 +98,6 @@ bool TokenStream::isExpression() {
 TokenPtr TokenStream::expression() {
     std::vector<TokenPtr> expressionParts;
     while( !mInputStream.eof() &&
-	   !isComment() &&
 	   !isClosingSpecialOperator() ) {
 	if( isQuickExpressionStart() ) {
 	    quickExpressionStart();
@@ -120,8 +119,13 @@ TokenPtr TokenStream::expression() {
 	    expressionParts.emplace_back( longString() );
 	} else if( isNumber() ) {
 	    expressionParts.emplace_back( number() );
+	} else if( isComment() ) {
+	    expressionParts.emplace_back( comment() );
 	} else if( isNewLine() ) {
-	    newLine();
+	    while( isNewLine() ) {
+		// Skip empty lines
+		newLine();
+	    }
 	    if( isWhitespace() ) {
 		int indentation = judgeWhitespace();
 		if( indentation <= mIndentationStack.top() ) {
