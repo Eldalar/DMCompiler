@@ -151,6 +151,8 @@ TokenPtr TokenStream::expression( bool insideTernary ) {
 	    expressionParts.emplace_back( number() );
 	} else if( isColor() ) {
 	    expressionParts.emplace_back( color() );
+	} else if( isIcon() ) {
+	    expressionParts.emplace_back( icon() );
 	} else if( isComment() ) {
 	    expressionParts.emplace_back( comment() );
 	} else if( isMultiLineComment() ) {
@@ -386,3 +388,16 @@ TokenPtr TokenStream::color() {
     return Token::create( Token::Color, Atom::create( value ) );
 }
 
+bool TokenStream::isIcon() {
+    return mInputStream.peek() == '\'';
+}
+
+TokenPtr TokenStream::icon() {
+    mInputStream.next();
+    std::string value = "";
+    while( !isIcon() ) {
+	value+= mInputStream.next();
+    }
+    mInputStream.next();
+    return Token::create( Token::Icon, Atom::create( value ) );
+}

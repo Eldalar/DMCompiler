@@ -89,6 +89,10 @@ private:
     bool isColor();
     //! Parses the color
     TokenPtr color();
+    //! Determines if the next token is an icon
+    bool isIcon();
+    //! Parses the icon
+    TokenPtr icon();
     //! Throws a ParseException
     void throwError(std::string error );
 

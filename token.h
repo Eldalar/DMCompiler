@@ -25,7 +25,8 @@ public:
 	String,
 	File,
 	Number,
-	Color
+	Color,
+	Icon
     };
     //! Constructor
     Token( Type type,
