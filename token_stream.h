@@ -81,6 +81,8 @@ private:
     TokenPtr longString();
     //! Determines if the next token is a number
     bool isNumber();
+    //! Determines if the next token is a hex number
+    bool isHexNumber();
     //! Parses the number
     TokenPtr number();
     //! Determines if the next token is a color

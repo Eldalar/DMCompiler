@@ -356,6 +356,14 @@ bool TokenStream::isNumber() {
 	    c <= '9';
 }
 
+bool TokenStream::isHexNumber() {
+    char c = mInputStream.peek();
+    return  (c >= '0' &&
+	     c <= '9') ||
+	    (c >= 'a' &&
+	     c <= 'f');
+}
+
 TokenPtr TokenStream::number() {
     std::string value = "";
     while( isNumber() ||
@@ -372,7 +380,7 @@ bool TokenStream::isColor() {
 TokenPtr TokenStream::color() {
     std::string value = "";
     while( isColor() ||
-	   isNumber() ) {
+	   isHexNumber() ) {
 	value+= mInputStream.next();
     }
     return Token::create( Token::Color, Atom::create( value ) );
