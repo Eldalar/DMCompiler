@@ -23,7 +23,8 @@ public:
 	SpecialOperator,
 	String,
 	File,
-	Number
+	Number,
+	Ternary
     };
     //! Constructor
     Token( Type type,

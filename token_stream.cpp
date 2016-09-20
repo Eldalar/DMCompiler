@@ -121,10 +121,12 @@ bool TokenStream::isExpression() {
 	    isQuickExpressionStart();
 }
 
-TokenPtr TokenStream::expression() {
+TokenPtr TokenStream::expression( bool insideTernary ) {
     std::vector<TokenPtr> expressionParts;
     while( !mInputStream.eof() &&
-	   !isClosingSpecialOperator() ) {
+	   !isClosingSpecialOperator() &&
+	   !(insideTernary &&
+	     mInputStream.peek() == ':' ) ) {
 	if( isQuickExpressionStart() ) {
 	    quickExpressionStart();
 	} else if( isIdentifier() ) {
@@ -137,6 +139,8 @@ TokenPtr TokenStream::expression() {
 	    mInputStream.next();
 	} else if( isOperator() ) {
 	    expressionParts.emplace_back( Operator() );
+	} else if( isTernaryOperator() ) {
+	    expressionParts.emplace_back( ternaryOperator() );
 	} else if( isWhitespace() ) {
 	    skipWhitespace();
 	} else if( isString() ) {
@@ -234,6 +238,19 @@ TokenPtr TokenStream::specialOperator() {
 			  Atom::create( mInputStream.next() ) );
 }
 
+bool TokenStream::isTernaryOperator() {
+    return mInputStream.peek() == '?';
+}
+
+TokenPtr TokenStream::ternaryOperator() {
+    std::vector<TokenPtr> tokens;
+    mInputStream.next();
+    tokens.emplace_back( expression( true ) );
+    mInputStream.next();
+    tokens.emplace_back( expression( ) );
+    return Token::create( Token::Ternary, std::move( tokens ) ) ;
+}
+
 bool TokenStream::isOperator() {
     char c = mInputStream.peek();
     char c2 = mInputStream.peek();
@@ -246,7 +263,8 @@ bool TokenStream::isOperator() {
 	    c == '&' ||
 	    c == '>' ||
 	    c == '<' ||
-	    c == '!';
+	    c == '!' ||
+	    c == '%';
 }
 
 TokenPtr TokenStream::Operator() {
@@ -254,6 +272,9 @@ TokenPtr TokenStream::Operator() {
     value += mInputStream.next();
     if( isOperator() ) {
 	value += mInputStream.next();
+	if( isOperator() ) {
+	    value += mInputStream.next();
+	}
     }
     return Token::create( Token::Operator, Atom::create( value ) );
 }
