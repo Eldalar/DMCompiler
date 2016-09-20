@@ -64,7 +64,7 @@ private:
     //! Skips the Whitespace
     void skipWhitespace();
     //! Determines if the next token is an identifier
-    bool isIdentifier();
+    bool isIdentifier( bool insideTernary = false );
     //! Parses an identifier
     TokenPtr identifier();
     //! Determines if the next token is Preprocessor Instruction

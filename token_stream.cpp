@@ -129,7 +129,7 @@ TokenPtr TokenStream::expression( bool insideTernary ) {
 	     mInputStream.peek() == ':' ) ) {
 	if( isQuickExpressionStart() ) {
 	    quickExpressionStart();
-	} else if( isIdentifier() ) {
+	} else if( isIdentifier( insideTernary ) ) {
 	    expressionParts.emplace_back( identifier() );
 	} else if( isSpecialOperator() ) {
 	    expressionParts.emplace_back( specialOperator() );
@@ -196,13 +196,14 @@ void TokenStream::quickExpressionStart() {
     mInputStream.next();
 }
 
-bool TokenStream::isIdentifier() {
+bool TokenStream::isIdentifier( bool insideTernary ) {
     char c = mInputStream.peek();
     return (c >= 'a' &&
 	    c <= 'z') ||
 	   (c >= 'A' &&
 	    c <= 'Z') ||
 	    c == '.' ||
+	    (c == ':' && !insideTernary) ||
 	    c == '_';
 }
 
