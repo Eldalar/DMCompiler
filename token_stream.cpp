@@ -149,6 +149,8 @@ TokenPtr TokenStream::expression( bool insideTernary ) {
 	    expressionParts.emplace_back( longString() );
 	} else if( isNumber() ) {
 	    expressionParts.emplace_back( number() );
+	} else if( isColor() ) {
+	    expressionParts.emplace_back( color() );
 	} else if( isComment() ) {
 	    expressionParts.emplace_back( comment() );
 	} else if( isMultiLineComment() ) {
@@ -248,7 +250,7 @@ TokenPtr TokenStream::ternaryOperator() {
     tokens.emplace_back( expression( true ) );
     mInputStream.next();
     tokens.emplace_back( expression( ) );
-    return Token::create( Token::Ternary, std::move( tokens ) ) ;
+    return Token::create( Token::TernaryOperator, std::move( tokens ) ) ;
 }
 
 bool TokenStream::isOperator() {
@@ -361,5 +363,18 @@ TokenPtr TokenStream::number() {
 	value += mInputStream.next();
     }
     return Token::create( Token::Number, Atom::create( value ) );
+}
+
+bool TokenStream::isColor() {
+    return mInputStream.peek() == '#';
+}
+
+TokenPtr TokenStream::color() {
+    std::string value = "";
+    while( isColor() ||
+	   isNumber() ) {
+	value+= mInputStream.next();
+    }
+    return Token::create( Token::Color, Atom::create( value ) );
 }
 

@@ -83,6 +83,10 @@ private:
     bool isNumber();
     //! Parses the number
     TokenPtr number();
+    //! Determines if the next token is a color
+    bool isColor();
+    //! Parses the color
+    TokenPtr color();
     //! Throws a ParseException
     void throwError(std::string error );
 

@@ -21,10 +21,11 @@ public:
 	Atom,
 	Operator,
 	SpecialOperator,
+	TernaryOperator,
 	String,
 	File,
 	Number,
-	Ternary
+	Color
     };
     //! Constructor
     Token( Type type,
