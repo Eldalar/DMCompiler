@@ -20,6 +20,9 @@ public:
 
     TokenPtr next();
     bool eof() const;
+
+    //! Throws a ParseException
+    void throwError(std::string error );
 private:
     //! Determines if the next token is a comment
     bool isComment();
@@ -29,10 +32,19 @@ private:
     bool isMultiLineComment();
     //! Parses a multiline comment token
     TokenPtr multilineComment();
+    //! Determines if the next token is Preprocessor Instruction
+    bool isPreprocessor();
+    //! Parses the Preprocessor Instruction
+    TokenPtr preprocessor();
+    //! Determines if the next token is Preprocessor Instruction
+    bool isSeperator();
+    //! Parses the seperator
+    TokenPtr seperator();
+    //---- Old ----
     //! Determines if the next token is a newline
-    bool isNewLine();
+    bool isNewLine( int offset = 0 );
     //! Parses a newLine
-    void newLine();
+    TokenPtr newLine();
     //! Determines if the next token is an expression
     bool isExpression();
     //! Parses an expression
@@ -59,18 +71,12 @@ private:
     TokenPtr ternaryOperator();
     //! Determines if the next token is Whitespace
     bool isWhitespace( uint32_t offset = 0 );
-    //! Determines the length of the following Whitespace token
-    uint32_t judgeWhitespace();
-    //! Skips the Whitespace
-    void skipWhitespace();
+    //! Parses the whitespace
+    TokenPtr whitespace();
     //! Determines if the next token is an identifier
     bool isIdentifier( bool insideTernary = false );
     //! Parses an identifier
     TokenPtr identifier();
-    //! Determines if the next token is Preprocessor Instruction
-    bool isPreprocessor();
-    //! Parses the Preprocessor Instruction
-    TokenPtr preprocessor();
     //! Determines if the next token is a string
     bool isString();
     //! Parses the string
@@ -93,8 +99,6 @@ private:
     bool isIcon();
     //! Parses the icon
     TokenPtr icon();
-    //! Throws a ParseException
-    void throwError(std::string error );
 
     //! Copy-Constructor (delete)
     TokenStream( const TokenStream & ) = delete;
@@ -102,7 +106,7 @@ private:
     TokenStream &operator=( const TokenStream & ) = delete;
 
     InputStream mInputStream;
-    std::stack<uint32_t> mIndentationStack;
+    std::stack<int32_t> mIndentationStack;
 };
 
 #endif // TOKEN_STREAM_H

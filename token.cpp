@@ -3,15 +3,16 @@
 #include <memory>
 
 Token::Token( Type type,
-	      Content content )
-    : mType( type ) {
-    mContent.push_back( std::move( content ) );
+	      std::string content )
+    : mType( type ),
+      mContent( content ) {
 }
 
 Token::Token( Type type,
-	      std::vector<std::unique_ptr<Token>> content )
-    : mType( type ),
-      mContent( std::move( content ) ) {}
+	      char content )
+    : mType( type ) {
+    mContent = content;
+}
 
 Token::~Token() {}
 
@@ -19,8 +20,8 @@ Token::Type Token::getType() {
     return mType;
 }
 
-TokenPtr& Token::getContent( uint32_t index ) {
-    return mContent[index];
+std::string Token::getContent() {
+    return mContent;
 }
 
 std::string Token::ToString( Type type ) {
@@ -52,12 +53,23 @@ std::string Token::ToString( Type type ) {
     case Token::Number: {
 	return "Number";
     }
+    case Token::Color: {
+	return "Color";
+    }
+    case Token::Icon: {
+	return "Icon";
+    }
+    case Token::Seperator: {
+	return "Seperator";
+    }
+    case Token::NewLine: {
+	return "Whitespace";
+    }
+    case Token::Whitespace: {
+	return "Whitespace";
+    }
     }
     return "Unknown";
-}
-
-bool Token::isAtom() const {
-    return false;
 }
 
 void indent( std::stringstream& ss, int indentation ) {
@@ -68,40 +80,21 @@ void indent( std::stringstream& ss, int indentation ) {
     }
 }
 
-std::string Token::str( int indentation ) {
-    int next_indentation = indentation + 1;
-    if( indentation < 0 ) {
-	next_indentation = indentation;
-    }
+std::string Token::str() {
     std::stringstream ss;
-    indent(ss, indentation);
-    ss << "{" << std::endl;
-    indent(ss, next_indentation);
-    ss << "Type: " << ToString( mType ) << std::endl;;
-    indent(ss, next_indentation);
-    ss << "Content: ";
-    bool isAtom = !(mContent.size() > 1 ||
-		    (mContent.size() > 0 && !mContent[0]->isAtom() ));
-    if( !isAtom ) {
-	ss  << std::endl;
-    }
-    for( std::unique_ptr<Token>& content : mContent ) {
-	ss << content->str( next_indentation );
-    }
-    if( isAtom ) {
-	ss << std::endl;
-    }
-    indent(ss, indentation);
-    ss << "}" << std::endl;
+    ss << "{";
+    ss << " Type: " << ToString( mType );
+    ss << " Content: " << mContent;
+    ss << " }";
     return ss.str();
 }
 
 std::unique_ptr<Token> Token::create( Type type,
-				      std::vector<Content> content ) {
-    return std::unique_ptr<Token>( new Token( type, std::move(content) ));
+				      std::string content ) {
+    return std::unique_ptr<Token>( new Token( type, content ));
 }
 
 std::unique_ptr<Token> Token::create( Type type,
-				      Content content ) {
-    return std::unique_ptr<Token>( new Token( type, std::move(content) ));
+				      char content ) {
+    return std::unique_ptr<Token>( new Token( type, content ));
 }

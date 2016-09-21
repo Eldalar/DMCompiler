@@ -33,32 +33,35 @@ bool FileReader::readFile( std::string file,
     try {
 	InputStream inputStream( fullPath );
 	TokenStream tokenStream( std::move( inputStream ) );
-	std::vector<TokenPtr> subtokens;
+	std::vector<TokenPtr> tokens;
+	bool preProcessorFound = false;
 	while( !tokenStream.eof() ) {
 	    TokenPtr token = tokenStream.next();
-	    if( token) {
-		if( token->getType() == Token::Preprocessor ) {
-		    TokenPtr& subtoken = token->getContent(0);
-		    if( subtoken->getContent( 0 )->getContent(0)->str() == "include" ) {
-			std::string includedFile = subtoken->getContent(1)->getContent(0)->str();
-			std::string extension = includedFile.substr( includedFile.find_last_of('.') + 1 );
-			// Excluding map Files for now
-			if( extension != "dmm") {
-			    mFileNames.push_back( std::make_pair(includedFile, newDirectory) );
-			}
-		    }
+	    if( token->getType() == Token::Preprocessor &&
+		token->getContent() == "include" ) {
+		preProcessorFound = true;
+	    } else if( preProcessorFound ) {
+		if( token->getType() == Token::String ) {
+		    mFileNames.push_back( make_pair( token->getContent(),
+							newDirectory) );
+		    preProcessorFound = false;
+		} else if( token->getType() != Token::Whitespace ) {
+		    tokenStream.throwError( "include followed by something else than a string or a whitespace: " +
+					    token->str());
+		    preProcessorFound = false;
 		}
-		failureLog << token->str() << std::endl;
-		subtokens.emplace_back( std::move( token ) );
 	    }
+	    tokens.emplace_back( std::move( token ) );
 	}
+	std::cout << failureLog.str() << std::endl;
 	mFileTokens.emplace( file,
-			     Token::create( Token::File, std::move( subtokens ) ) );
+			     std::move( tokens ) );
 
     }
     catch( ParseException& parseException ) {
 	std::cout << parseException.toError() << std::endl;
 	std::cout << failureLog.str() << std::endl << std::endl;
+	std::cout << "------------" << std::endl;
 	return false;
     }
     return true;
@@ -70,6 +73,7 @@ void FileReader::run() {
     while(mFileNames.size() > 0 ) {
 	std::string fileName = std::get<0>(mFileNames.back());
 	std::string directory = std::get<1>(mFileNames.back());
+
 	mFileNames.pop_back();
 	if( mFileTokens.find( fileName ) == mFileTokens.end() ) {
 	    if( readFile( fileName,

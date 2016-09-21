@@ -1,40 +1,55 @@
 #include "token_stream.h"
 #include "parse_exception.h"
 
-#include "atom.h"
-
 #include <sstream>
 #include <iostream>
 
 TokenStream::TokenStream( InputStream inputStream )
     : mInputStream( std::move( inputStream ) ),
-      mIndentationStack( {0} ) {
+      mIndentationStack( {-1} ) {
 }
 
 TokenStream::~TokenStream() {}
 
 TokenPtr TokenStream::next() {
-    bool repeat = false;
-    while(!mInputStream.eof()) {
-	char nextchar = mInputStream.peek();
-	repeat = false;
-	if( isComment() ) {
-	    return comment();
-	} else 
-	if( isMultiLineComment() ) {
-	    return multilineComment();
-	} else if( isExpression() ) {
-	    return expression();
-	} else if( isNewLine() ) {
-	    newLine();
-	} else if( isPreprocessor() ) {
-	    return preprocessor();
-	} else {
-	    std::stringstream ss;
-	    ss << (int)nextchar;
-	    ss << "[" << nextchar << "]";
-	    throwError("Unknown char encountered: " + ss.str() );
-	}
+    // Ignoring escaped NewLines (\ followed by a newLine)
+    if(mInputStream.peek(0) == '\\' &&
+	isNewLine( 1 ) ) {
+	mInputStream.next();
+	newLine();
+    }
+    if( isComment() ) {
+	return comment();
+    } else if( isMultiLineComment() ) {
+	return multilineComment();
+    } else if( isNewLine() ) {
+	return newLine();
+    } else if( isPreprocessor() ) {
+	return preprocessor();
+    } else if( isSeperator() ) {
+	return seperator();
+    } else if( isIdentifier() ) {
+	return identifier();
+    } else if( isOperator() ) {
+	return Operator();
+    } else if( isSpecialOperator() ) {
+	return specialOperator();
+    } else if( isString() ) {
+	return string();
+    } else if( isColor() ) {
+	return color();
+    } else if( isNumber() ) {
+	return number();
+    } else if( isIcon() ) {
+	return icon();
+    } else if( isWhitespace() ) {
+	return whitespace();
+    } else {
+	char nextChar = mInputStream.peek();
+	std::stringstream ss;
+	ss << (int)nextChar;
+	ss << "[" << nextChar << "]";
+	throwError("Unknown char encountered: " + ss.str() );
     }
     return nullptr;
 }
@@ -55,7 +70,7 @@ bool TokenStream::eof() const {
 }
 
 bool TokenStream::isComment() {
-    return  mInputStream.peek() == '/' &&
+    return  mInputStream.peek(0) == '/' &&
 	    mInputStream.peek(1) == '/';
 }
 
@@ -74,7 +89,7 @@ TokenPtr TokenStream::comment() {
     if( !mInputStream.eof() ) {
 	newLine();
     }
-    return Token::create( Token::Comment, Atom::create(value) );
+    return Token::create( Token::Comment, value );
 }
 
 bool TokenStream::isMultiLineComment() {
@@ -97,15 +112,41 @@ TokenPtr TokenStream::multilineComment() {
     }
     mInputStream.next();
     mInputStream.next();
-    return Token::create( Token::Comment, Atom::create(value) );
+    return Token::create( Token::Comment, value );
 }
 
-bool TokenStream::isNewLine() {
+bool TokenStream::isPreprocessor() {
+    return mInputStream.peek() == '#';
+}
+
+TokenPtr TokenStream::preprocessor() {
+    mInputStream.next();
+    return Token::create( Token::Preprocessor, identifier()->getContent() );
+}
+
+bool TokenStream::isSeperator() {
+    return  (mInputStream.peek(0) == '/' &&
+	     mInputStream.peek(1) != '/' &&
+	     mInputStream.peek(1) != '*') ||
+	     mInputStream.peek(0) == ',' ||
+	     mInputStream.peek(0) == '.' ||
+	     mInputStream.peek(0) == ';';
+}
+
+TokenPtr TokenStream::seperator() {
+    return Token::create( Token::Seperator, mInputStream.next() );
+}
+
+//-----------------------------------------------------------
+//----------------- Old -------------------------------------
+//-----------------------------------------------------------
+
+bool TokenStream::isNewLine( int offset ) {
     return !mInputStream.eof() &&
 	    mInputStream.peek() == '\r';
 }
 
-void TokenStream::newLine() {
+TokenPtr TokenStream::newLine() {
     if( mInputStream.peek() == '\r' ) {
 	mInputStream.next();
 	if( mInputStream.peek() == '\n' ) {
@@ -114,6 +155,7 @@ void TokenStream::newLine() {
     } else {
 	throwError( "Not really a newLine" );
     }
+    return Token::create( Token::NewLine );
 }
 
 bool TokenStream::isExpression() {
@@ -141,8 +183,8 @@ TokenPtr TokenStream::expression( bool insideTernary ) {
 	    expressionParts.emplace_back( Operator() );
 	} else if( isTernaryOperator() ) {
 	    expressionParts.emplace_back( ternaryOperator() );
-	} else if( isWhitespace() ) {
-	    skipWhitespace();
+	} else if( isComment() ) {
+	    expressionParts.emplace_back( comment() );
 	} else if( isString() ) {
 	    expressionParts.emplace_back( string() );
 	} else if( isLongString() ) {
@@ -153,8 +195,6 @@ TokenPtr TokenStream::expression( bool insideTernary ) {
 	    expressionParts.emplace_back( color() );
 	} else if( isIcon() ) {
 	    expressionParts.emplace_back( icon() );
-	} else if( isComment() ) {
-	    expressionParts.emplace_back( comment() );
 	} else if( isMultiLineComment() ) {
 	    expressionParts.emplace_back( multilineComment() );
 	} else if( mInputStream.peek(0) == '\\' &&
@@ -167,23 +207,12 @@ TokenPtr TokenStream::expression( bool insideTernary ) {
 		// Skip empty lines
 		newLine();
 	    }
-	    if( isWhitespace() ) {
-		int indentation = judgeWhitespace();
-		if( indentation <= mIndentationStack.top() ) {
-		    break;
-		} else {
-		    mIndentationStack.push( indentation );
-		    expressionParts.emplace_back( expression() );
-		    mIndentationStack.pop();
-		}
-	    } else {
-		break;
-	    }
 	} else {
 	    throwError( "Unable to interpret Expression" );
 	}
     }
-    return Token::create( Token::Expression, std::move(expressionParts) );
+    return Token::create( Token::Expression, "" );
+    //return Token::create( Token::Expression, std::move(expressionParts) );
 }
 
 bool TokenStream::isQuickExpressionStart() {
@@ -203,7 +232,6 @@ bool TokenStream::isIdentifier( bool insideTernary ) {
 	   (c >= 'A' &&
 	    c <= 'Z') ||
 	    c == '.' ||
-	    (c == ':' && !insideTernary) ||
 	    c == '_';
 }
 
@@ -217,19 +245,21 @@ TokenPtr TokenStream::identifier() {
     if( value.size() == 0 ) {
 	throwError( "Unable to read the identifier" );
     }
-    return Token::create( Token::Identifier, Atom::create(value) );
+    return Token::create( Token::Identifier, value );
 }
 
 bool TokenStream::isClosingSpecialOperator() {
     char c = mInputStream.peek();
     return  c == ')' ||
-	    c == ']';
+	    c == ']' ||
+	    c == '}';
 }
 
 bool TokenStream::isOpeningSpecialOperator() {
     char c = mInputStream.peek();
     return  c == '(' ||
-	    c == '[';
+	    c == '[' ||
+	    c == '{';
 }
 
 bool TokenStream::isSpecialOperator() {
@@ -240,7 +270,7 @@ bool TokenStream::isSpecialOperator() {
 
 TokenPtr TokenStream::specialOperator() {
     return Token::create( Token::SpecialOperator,
-			  Atom::create( mInputStream.next() ) );
+			  mInputStream.next() );
 }
 
 bool TokenStream::isTernaryOperator() {
@@ -253,7 +283,8 @@ TokenPtr TokenStream::ternaryOperator() {
     tokens.emplace_back( expression( true ) );
     mInputStream.next();
     tokens.emplace_back( expression( ) );
-    return Token::create( Token::TernaryOperator, std::move( tokens ) ) ;
+    return Token::create( Token::TernaryOperator, "" ) ;
+    //return Token::create( Token::TernaryOperator, std::move( tokens ) ) ;
 }
 
 bool TokenStream::isOperator() {
@@ -281,7 +312,7 @@ TokenPtr TokenStream::Operator() {
 	    value += mInputStream.next();
 	}
     }
-    return Token::create( Token::Operator, Atom::create( value ) );
+    return Token::create( Token::Operator, value );
 }
 
 bool TokenStream::isWhitespace( uint32_t offset ) {
@@ -290,27 +321,12 @@ bool TokenStream::isWhitespace( uint32_t offset ) {
 	 mInputStream.peek( offset ) == 9);
 }
 
-uint32_t TokenStream::judgeWhitespace() {
-    uint32_t offset = 0;
-    while(isWhitespace(offset)) {
-	offset++;
+TokenPtr TokenStream::whitespace() {
+    std::string value = "";
+    while(isWhitespace()) {
+	value += mInputStream.next();
     }
-    return offset;
-}
-
-void TokenStream::skipWhitespace() {
-    while( isWhitespace() ) {
-	mInputStream.next();
-    }
-}
-
-bool TokenStream::isPreprocessor() {
-    return mInputStream.peek() == '#';
-}
-
-TokenPtr TokenStream::preprocessor() {
-    mInputStream.next();
-    return Token::create( Token::Preprocessor, expression() );
+    return Token::create( Token::Whitespace, value );
 }
 
 bool TokenStream::isString() {
@@ -320,19 +336,28 @@ bool TokenStream::isString() {
 TokenPtr TokenStream::string() {
     mInputStream.next();
     std::string value;
-    while( !isString() ) {
+    int insideSquareBrackets = 0;
+    while( !isString() ||
+	insideSquareBrackets > 0 ) {
 	char c = mInputStream.peek( 0 );
+	if( c == '[') {
+	    insideSquareBrackets++;
+	}
+	if( c == ']') {
+	    insideSquareBrackets--;
+	}
 	if( c == '\\') {
 	    char c2 = mInputStream.peek( 1 );
 	    if( c2 == '"' ||
-		c2 == '\\') {
+		c2 == '\\' ||
+		c2 == '[' ) {
 		mInputStream.next();
 	    }
 	}
 	value += mInputStream.next();
     }
     mInputStream.next();
-    return Token::create( Token::String, Atom::create( value ) );
+    return Token::create( Token::String, value );
 }
 
 bool TokenStream::isLongString() {
@@ -350,7 +375,7 @@ TokenPtr TokenStream::longString() {
     }
     mInputStream.next();
     mInputStream.next();
-    return Token::create( Token::String, Atom::create( value ) );
+    return Token::create( Token::String, value );
 }
 
 bool TokenStream::isNumber() {
@@ -369,11 +394,12 @@ bool TokenStream::isHexNumber() {
 
 TokenPtr TokenStream::number() {
     std::string value = "";
-    while( isNumber() ||
-	   mInputStream.peek() == '.' ) {
+    while( !mInputStream.eof() &&
+	   (isNumber() ||
+	    mInputStream.peek() == '.' )) {
 	value += mInputStream.next();
     }
-    return Token::create( Token::Number, Atom::create( value ) );
+    return Token::create( Token::Number, value );
 }
 
 bool TokenStream::isColor() {
@@ -386,7 +412,7 @@ TokenPtr TokenStream::color() {
 	   isHexNumber() ) {
 	value+= mInputStream.next();
     }
-    return Token::create( Token::Color, Atom::create( value ) );
+    return Token::create( Token::Color, value );
 }
 
 bool TokenStream::isIcon() {
@@ -400,5 +426,5 @@ TokenPtr TokenStream::icon() {
 	value+= mInputStream.next();
     }
     mInputStream.next();
-    return Token::create( Token::Icon, Atom::create( value ) );
+    return Token::create( Token::Icon, value );
 }

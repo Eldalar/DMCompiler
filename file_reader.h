@@ -29,7 +29,7 @@ private:
     //! Asignment-Operator (delete)
     FileReader &operator=( const FileReader & ) = delete;
 
-    std::map<std::string, TokenPtr> mFileTokens;
+    std::map<std::string, std::vector<TokenPtr>> mFileTokens;
     std::vector<std::pair<std::string,std::string>> mFileNames;
     std::string mFolder;
 };

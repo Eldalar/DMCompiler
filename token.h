@@ -11,7 +11,6 @@
  **/
 class Token
 {
-    using Content = std::unique_ptr<Token>;
 public:
     enum Type : uint32_t {
 	Comment,
@@ -26,30 +25,31 @@ public:
 	File,
 	Number,
 	Color,
-	Icon
+	Icon,
+	Seperator,
+	NewLine,
+	Whitespace
     };
     //! Constructor
     Token( Type type,
-	   Content content );
+	   std::string content );
     //! Constructor
     Token( Type type,
-	   std::vector<Content> content = {} );
+	   char content );
     //! Destructor
     virtual ~Token();
     //! Move-Constructor (default)
     Token( Token && ) = default;
 
-    virtual std::string str( int indentation = 0 );
+    virtual std::string str();
 
     static std::unique_ptr<Token> create( Type type,
-					  std::vector<Content> content = {} );
+					  std::string content = "" );
     static std::unique_ptr<Token> create( Type type,
-					  Content content );
+					  char content );
 
     Type getType();
-    std::unique_ptr<Token>& getContent( uint32_t index );
-
-    virtual bool isAtom() const;
+    std::string getContent();
 private:
     //! Copy-Constructor (delete)
     Token( const Token & ) = delete;
@@ -59,7 +59,7 @@ private:
     static std::string ToString( Type type );
 
     Type mType;
-    std::vector<std::unique_ptr<Token>> mContent;
+    std::string mContent;
 };
 
 using TokenPtr = std::unique_ptr<Token>;

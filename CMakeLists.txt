@@ -5,6 +5,5 @@ add_executable(DMCompiler input_stream.cpp
 			  token.cpp
 			  token_stream.cpp
 			  parse_exception.cpp
-			  file_reader.cpp
-			  atom.cpp)
+			  file_reader.cpp)
 target_compile_features( DMCompiler PRIVATE cxx_range_for )
