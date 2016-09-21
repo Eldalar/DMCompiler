@@ -51,9 +51,9 @@ bool FileReader::readFile( std::string file,
 		    preProcessorFound = false;
 		}
 	    }
+	    failureLog << token->str() << std::endl;
 	    tokens.emplace_back( std::move( token ) );
 	}
-	std::cout << failureLog.str() << std::endl;
 	mFileTokens.emplace( file,
 			     std::move( tokens ) );
 

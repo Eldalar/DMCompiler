@@ -130,6 +130,7 @@ bool TokenStream::isSeperator() {
 	     mInputStream.peek(1) != '*') ||
 	     mInputStream.peek(0) == ',' ||
 	     mInputStream.peek(0) == '.' ||
+	     mInputStream.peek(0) == ':' ||
 	     mInputStream.peek(0) == ';';
 }
 
@@ -143,7 +144,7 @@ TokenPtr TokenStream::seperator() {
 
 bool TokenStream::isNewLine( int offset ) {
     return !mInputStream.eof() &&
-	    mInputStream.peek() == '\r';
+	    mInputStream.peek( offset ) == '\r';
 }
 
 TokenPtr TokenStream::newLine() {
@@ -300,7 +301,8 @@ bool TokenStream::isOperator() {
 	    c == '>' ||
 	    c == '<' ||
 	    c == '!' ||
-	    c == '%';
+	    c == '%' ||
+	    c == '?';
 }
 
 TokenPtr TokenStream::Operator() {
