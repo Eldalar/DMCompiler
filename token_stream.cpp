@@ -30,12 +30,14 @@ TokenPtr TokenStream::next() {
 	return seperator();
     } else if( isIdentifier() ) {
 	return identifier();
+    } else if( isString() ) {
+	return string();
+    } else if( isLongString() ) {
+	return longString();
     } else if( isOperator() ) {
 	return Operator();
     } else if( isSpecialOperator() ) {
 	return specialOperator();
-    } else if( isString() ) {
-	return string();
     } else if( isColor() ) {
 	return color();
     } else if( isNumber() ) {
@@ -85,9 +87,6 @@ TokenPtr TokenStream::comment() {
     while( !mInputStream.eof() &&
 	   !isNewLine() ) {
 	value += mInputStream.next();
-    }
-    if( !mInputStream.eof() ) {
-	newLine();
     }
     return Token::create( Token::Comment, value );
 }
@@ -144,17 +143,13 @@ TokenPtr TokenStream::seperator() {
 
 bool TokenStream::isNewLine( int offset ) {
     return !mInputStream.eof() &&
-	    mInputStream.peek( offset ) == '\r';
+	(mInputStream.peek( offset ) == '\r' ||
+	 mInputStream.peek( offset ) == '\n');
 }
 
 TokenPtr TokenStream::newLine() {
-    if( mInputStream.peek() == '\r' ) {
+    while( isNewLine() ) {
 	mInputStream.next();
-	if( mInputStream.peek() == '\n' ) {
-	    mInputStream.next();
-	}
-    } else {
-	throwError( "Not really a newLine" );
     }
     return Token::create( Token::NewLine );
 }
@@ -289,8 +284,14 @@ TokenPtr TokenStream::ternaryOperator() {
 }
 
 bool TokenStream::isOperator() {
-    char c = mInputStream.peek();
-    char c2 = mInputStream.peek();
+    if( mInputStream.eof() ) {
+	return false;;
+    }
+    char c = mInputStream.peek(0);
+    char c2 = ' ';
+    if( !mInputStream.eof(1) ) {
+	c2 = mInputStream.peek(1);
+    }
     return  c == '+' ||
 	    c == '-' ||
 	    c == '*' ||
@@ -301,14 +302,17 @@ bool TokenStream::isOperator() {
 	    c == '>' ||
 	    c == '<' ||
 	    c == '!' ||
+	    c == '~' ||
 	    c == '%' ||
-	    c == '?';
+	    c == '?' ||
+	    c == '^';
 }
 
 TokenPtr TokenStream::Operator() {
     std::string value;
     value += mInputStream.next();
-    if( isOperator() ) {
+    if( !mInputStream.eof() &&
+	isOperator() ) {
 	value += mInputStream.next();
 	if( isOperator() ) {
 	    value += mInputStream.next();
@@ -342,6 +346,9 @@ TokenPtr TokenStream::string() {
     while( !isString() ||
 	insideSquareBrackets > 0 ) {
 	char c = mInputStream.peek( 0 );
+	if( isNewLine() ) {
+	    throwError("Encountered newline inside string");
+	}
 	if( c == '[') {
 	    insideSquareBrackets++;
 	}
@@ -351,12 +358,20 @@ TokenPtr TokenStream::string() {
 	if( c == '\\') {
 	    char c2 = mInputStream.peek( 1 );
 	    if( c2 == '"' ||
+		c2 == '\'' ||
 		c2 == '\\' ||
-		c2 == '[' ) {
+		c2 == '[' ||
+		c2 == ']') {
 		mInputStream.next();
+	    }
+	    // Skip the escaped NewLine
+	    if( isNewLine( 1 ) ) {
+		mInputStream.next();
+		newLine();
 	    }
 	}
 	value += mInputStream.next();
+
     }
     mInputStream.next();
     return Token::create( Token::String, value );
@@ -370,9 +385,18 @@ bool TokenStream::isLongString() {
 TokenPtr TokenStream::longString() {
     mInputStream.next();
     mInputStream.next();
+    int insideSquareBrackets = 0;
     std::string value;
-    while( mInputStream.peek(0) != '"' ||
-	   mInputStream.peek(1) != '}' ) {
+    while( (mInputStream.peek(0) != '"' ||
+	    mInputStream.peek(1) != '}') ||
+	    insideSquareBrackets > 0 ) {
+	char c = mInputStream.peek( 0 );
+	if( c == '[') {
+	    insideSquareBrackets++;
+	}
+	if( c == ']') {
+	    insideSquareBrackets--;
+	}
 	value += mInputStream.next();
     }
     mInputStream.next();
@@ -425,6 +449,13 @@ TokenPtr TokenStream::icon() {
     mInputStream.next();
     std::string value = "";
     while( !isIcon() ) {
+	char c = mInputStream.peek( 0 );
+	if( c == '\\') {
+	    char c2 = mInputStream.peek( 1 );
+	    if( c2 == '\'' ) {
+		mInputStream.next();
+	    }
+	}
 	value+= mInputStream.next();
     }
     mInputStream.next();

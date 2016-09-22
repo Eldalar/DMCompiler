@@ -59,8 +59,8 @@ bool FileReader::readFile( std::string file,
 
     }
     catch( ParseException& parseException ) {
-	std::cout << parseException.toError() << std::endl;
 	std::cout << failureLog.str() << std::endl << std::endl;
+	std::cout << parseException.toError() << std::endl;
 	std::cout << "------------" << std::endl;
 	return false;
     }

@@ -70,8 +70,8 @@ char InputStream::peek( size_t offset ) {
     return mBuffer[ mPosition + offset ];
 }
 
-bool InputStream::eof() const {
-    return mPosition >= mLength;
+bool InputStream::eof( size_t offset ) const {
+    return (mPosition + offset) >= mLength;
 }
 
 std::string InputStream::getFileName() const {

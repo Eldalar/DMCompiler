@@ -21,7 +21,7 @@ public:
     //! Gives back the character offset from here without incrementing
     char peek( size_t offset = 0 );
     //! Returns whether or not we are at the end of the stream
-    bool eof() const;
+    bool eof( size_t offset = 0 ) const;
     //! Gives the fileName of the string
     std::string getFileName() const;
     //! Gives the current Column
