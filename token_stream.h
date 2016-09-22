@@ -40,19 +40,10 @@ private:
     bool isSeperator();
     //! Parses the seperator
     TokenPtr seperator();
-    //---- Old ----
     //! Determines if the next token is a newline
     bool isNewLine( int offset = 0 );
     //! Parses a newLine
     TokenPtr newLine();
-    //! Determines if the next token is an expression
-    bool isExpression();
-    //! Parses an expression
-    TokenPtr expression( bool insideTernary = false );
-    //! Determines if the next token is an QuickExpressionStart
-    bool isQuickExpressionStart();
-    //! Parses an QuickExpressionStart
-    void quickExpressionStart();
     //! Determines if the next token is an Operator
     bool isOperator();
     //! Parses an Operator
@@ -65,10 +56,6 @@ private:
     bool isSpecialOperator();
     //! Parses a Special Operator
     TokenPtr specialOperator();
-    //! Determines if the next token is a Ternary Operator
-    bool isTernaryOperator();
-    //! Parses a Ternary Operator
-    TokenPtr ternaryOperator();
     //! Determines if the next token is Whitespace
     bool isWhitespace( uint32_t offset = 0 );
     //! Parses the whitespace

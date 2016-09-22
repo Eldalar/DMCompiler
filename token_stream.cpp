@@ -154,73 +154,6 @@ TokenPtr TokenStream::newLine() {
     return Token::create( Token::NewLine );
 }
 
-bool TokenStream::isExpression() {
-    return  isIdentifier() ||
-	    isQuickExpressionStart();
-}
-
-TokenPtr TokenStream::expression( bool insideTernary ) {
-    std::vector<TokenPtr> expressionParts;
-    while( !mInputStream.eof() &&
-	   !isClosingSpecialOperator() &&
-	   !(insideTernary &&
-	     mInputStream.peek() == ':' ) ) {
-	if( isQuickExpressionStart() ) {
-	    quickExpressionStart();
-	} else if( isIdentifier( insideTernary ) ) {
-	    expressionParts.emplace_back( identifier() );
-	} else if( isSpecialOperator() ) {
-	    expressionParts.emplace_back( specialOperator() );
-	    expressionParts.emplace_back( expression() );
-	    expressionParts.emplace_back( specialOperator() );
-	} else if( mInputStream.peek() == ',' ) {
-	    mInputStream.next();
-	} else if( isOperator() ) {
-	    expressionParts.emplace_back( Operator() );
-	} else if( isTernaryOperator() ) {
-	    expressionParts.emplace_back( ternaryOperator() );
-	} else if( isComment() ) {
-	    expressionParts.emplace_back( comment() );
-	} else if( isString() ) {
-	    expressionParts.emplace_back( string() );
-	} else if( isLongString() ) {
-	    expressionParts.emplace_back( longString() );
-	} else if( isNumber() ) {
-	    expressionParts.emplace_back( number() );
-	} else if( isColor() ) {
-	    expressionParts.emplace_back( color() );
-	} else if( isIcon() ) {
-	    expressionParts.emplace_back( icon() );
-	} else if( isMultiLineComment() ) {
-	    expressionParts.emplace_back( multilineComment() );
-	} else if( mInputStream.peek(0) == '\\' &&
-		   mInputStream.peek(1) == '\r' ) {
-	    // Simple removing escaped newlines
-	    mInputStream.next();
-	    newLine();
-	} else if( isNewLine() ) {
-	    while( isNewLine() ) {
-		// Skip empty lines
-		newLine();
-	    }
-	} else {
-	    throwError( "Unable to interpret Expression" );
-	}
-    }
-    return Token::create( Token::Expression, "" );
-    //return Token::create( Token::Expression, std::move(expressionParts) );
-}
-
-bool TokenStream::isQuickExpressionStart() {
-    return  mInputStream.peek() == '/' &&
-	(mInputStream.peek(1) != '/' &&
-	 mInputStream.peek(1) != '*' ) ;
-}
-
-void TokenStream::quickExpressionStart() {
-    mInputStream.next();
-}
-
 bool TokenStream::isIdentifier( bool insideTernary ) {
     char c = mInputStream.peek();
     return (c >= 'a' &&
@@ -267,20 +200,6 @@ bool TokenStream::isSpecialOperator() {
 TokenPtr TokenStream::specialOperator() {
     return Token::create( Token::SpecialOperator,
 			  mInputStream.next() );
-}
-
-bool TokenStream::isTernaryOperator() {
-    return mInputStream.peek() == '?';
-}
-
-TokenPtr TokenStream::ternaryOperator() {
-    std::vector<TokenPtr> tokens;
-    mInputStream.next();
-    tokens.emplace_back( expression( true ) );
-    mInputStream.next();
-    tokens.emplace_back( expression( ) );
-    return Token::create( Token::TernaryOperator, "" ) ;
-    //return Token::create( Token::TernaryOperator, std::move( tokens ) ) ;
 }
 
 bool TokenStream::isOperator() {
